@@ -23,6 +23,8 @@ spec:
       labels:
         app: movies-service
     spec:
+      imagePullSecrets:
+        - name: dockerconfigjson
       containers:
       - name: movies-service
         image: {{ .Values.moviesService.image.repository }}:{{ .Values.moviesService.image.tag }}
@@ -54,8 +56,6 @@ spec:
           initialDelaySeconds: 15
           periodSeconds: 20
       restartPolicy: Always
-      imagePullSecrets:
-        - name: dockerconfigjson
 ---
 apiVersion: v1
 kind: Service

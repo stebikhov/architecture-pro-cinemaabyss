@@ -1,0 +1,86 @@
+@startuml C4_Containers
+
+title Контейнерная диаграмма системы "Кинобездна" (To-Be архитектура)
+
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+' Убрали AddDeploymentTechnologies() — это вызывало синтаксическую ошибку
+
+Person(customer, "Клиент", "Пользователь платформы", $sprite="person")
+Person_Ext(recommendation_system, "Рекомендательная система", "Внешний сервис рекомендаций", $sprite="external")
+
+System_Boundary(cinemaabyss, "Кинобездна") {
+    Container_Boundary(api_gateway, "API Gateway", "Управление трафиком и маршрутизация") {
+        Container(proxy_service, "Proxy Service", "Go, порт 8000", "API Gateway с паттерном Strangler Fig", $tags="infrastructure")
+    }
+
+    Container_Boundary(services, "Микросервисы") {
+        Container(movies_service, "Movies Service", "Go, порт 8081", "Управление метаданными фильмов, жанрами, рейтингами", $tags="service")
+        Container(users_service, "Users Service", "Go, порт 8083", "Аутентификация, профили пользователей, избранное", $tags="service")
+        Container(payments_service, "Payments Service", "Go, порт 8084", "Обработка платежей, транзакции", $tags="service")
+        Container(subscriptions_service, "Subscriptions Service", "Go, порт 8085", "Управление подписками, тарифами, скидками", $tags="service")
+        Container(events_service, "Events Service", "Go, порт 8082", "Асинхронная коммуникация через Kafka", $tags="infrastructure")
+    }
+
+    Container_Boundary(monolith_boundary, "Монолит (постепенная миграция)", $tags="legacy") {
+        Container(monolith, "Monolith", "Go, порт 8080", "Устаревший монолит (Users, Payments, Subscriptions, Movies)", $tags="legacy")
+    }
+
+    Container_Boundary(data, "Хранение данных") {
+        ContainerDb(postgres, "PostgreSQL", "PostgreSQL 14", "Пользователи, фильмы, платежи, подписки, рейтинги", $tags="database")
+        ContainerDb(kafka, "Kafka", "Kafka 2.13-2.7.0", "Топики: movie-events, user-events, payment-events", $tags="message-broker")
+    }
+
+    Container_Boundary(infra, "Инфраструктура") {
+        Container(k8s, "Kubernetes", "K8s v1.19+", "Оркестрация контейнеров, масштабирование", $tags="infrastructure")
+        Container(helm, "Helm Charts", "Helm v3.2.0+", "Управление деплоем", $tags="infrastructure")
+    }
+}
+
+System_Ext(ghcr, "GHCR Registry", "GitHub Container Registry", "Хранение Docker-образов", $tags="ci-cd")
+System_Ext(ci_cd, "CI/CD Pipeline", "GitHub Actions", "Сборка, тестирование, деплой", $tags="ci-cd")
+
+Rel(customer, proxy_service, "HTTP/REST", "JSON")
+Rel(proxy_service, monolith, "Маршрутизация трафика (Strangler Fig)", "HTTP")
+Rel(proxy_service, movies_service, "Маршрутизация трафика (постепенная миграция)", "HTTP")
+Rel(proxy_service, users_service, "Маршрутизация трафика", "HTTP")
+Rel(proxy_service, payments_service, "Маршрутизация трафика", "HTTP")
+Rel(proxy_service, subscriptions_service, "Маршрутизация трафика", "HTTP")
+Rel(proxy_service, events_service, "Маршрутизация трафика", "HTTP")
+
+Rel_Back(monolith, postgres, "CRUD операции", "SQL")
+Rel(movies_service, postgres, "CRUD операции", "SQL")
+Rel(users_service, postgres, "CRUD операции", "SQL")
+Rel(payments_service, postgres, "CRUD операции", "SQL")
+Rel(subscriptions_service, postgres, "CRUD операции", "SQL")
+
+Rel(monolith, events_service, "Публикация событий", "Kafka")
+Rel(movies_service, events_service, "Публикация событий", "Kafka")
+Rel(users_service, events_service, "Публикация событий", "Kafka")
+Rel(payments_service, events_service, "Публикация событий", "Kafka")
+Rel(subscriptions_service, events_service, "Публикация событий", "Kafka")
+
+Rel(events_service, kafka, "Потребление/публикация событий", "Kafka Protocol")
+
+Rel_Back(recommendation_system, movies_service, "Получение метаданных для рекомендаций", "REST API")
+
+Rel(ci_cd, ghcr, "Push образов", "Docker")
+Rel(k8s, ghcr, "Pull образов", "Docker")
+Rel(helm, k8s, "Управление деплоем", "K8s API")
+
+UpdateElementStyle(proxy_service, $fontColor="#000000", $bgColor="#438DD5", $borderColor="#3C74B8")
+UpdateElementStyle(movies_service, $fontColor="#000000", $bgColor="#85BBF0", $borderColor="#78A8D8")
+UpdateElementStyle(users_service, $fontColor="#000000", $bgColor="#85BBF0", $borderColor="#78A8D8")
+UpdateElementStyle(payments_service, $fontColor="#000000", $bgColor="#85BBF0", $borderColor="#78A8D8")
+UpdateElementStyle(subscriptions_service, $fontColor="#000000", $bgColor="#85BBF0", $borderColor="#78A8D8")
+UpdateElementStyle(events_service, $fontColor="#000000", $bgColor="#B3E5A0", $borderColor="#A1CC8E")
+UpdateElementStyle(monolith, $fontColor="#FFFFFF", $bgColor="#999999", $borderColor="#888888")
+UpdateElementStyle(postgres, $fontColor="#000000", $bgColor="#C5C5C5", $borderColor="#B0B0B0")
+UpdateElementStyle(kafka, $fontColor="#000000", $bgColor="#FFD700", $borderColor="#E6C200")
+UpdateElementStyle(k8s, $fontColor="#FFFFFF", $bgColor="#326CE5", $borderColor="#2A5AC7")
+
+UpdateRelStyle(customer, proxy_service, $textColor="#000000", $lineColor="#000000", $offsetY="-30")
+UpdateRelStyle(proxy_service, monolith, $textColor="#666666", $lineColor="#666666", $offsetX="-40")
+UpdateRelStyle(proxy_service, movies_service, $textColor="#0066CC", $lineColor="#0066CC", $offsetX="40")
+
+@enduml

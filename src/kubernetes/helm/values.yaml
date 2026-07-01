@@ -1,12 +1,9 @@
-# Global settings
 global:
   namespace: cinemaabyss
   domain: cinemaabyss.example.com
 
-# Image pull secrets
 imagePullSecrets:
-  dockerconfigjson: ewoJImF1dGhzIjogewoJCSJnaGNyLmlvIjogewoJCQkiYXV0aCI6
-# Database configuration
+  dockerconfigjson: ewoJImF1dGhzIjogewoJCSJnaGNyLmlvIjogewoJCQkiYXV0aCI6ICJZVzV2Ym5sdGIzVnpPbUZ1YjI1NWJXOTFjdz09In19fQ==
 database:
   host: postgres
   port: 5432
@@ -29,11 +26,10 @@ database:
     size: 10Gi
     accessMode: ReadWriteOnce
 
-# Monolith configuration
 monolith:
   enabled: true
   image:
-    repository: ghcr.io/db-exp/cinemaabysstest/monolith
+    repository: ghcr.io/db-exp/cinemaabyss/monolith
     tag: latest
     pullPolicy: Always
   replicas: 1
@@ -49,11 +45,10 @@ monolith:
     targetPort: 8080
     type: ClusterIP
 
-# Proxy service configuration
 proxyService:
   enabled: true
   image:
-    repository: ghcr.io/db-exp/cinemaabysstest/proxy-service
+    repository: ghcr.io/db-exp/cinemaabyss/proxy-service
     tag: latest
     pullPolicy: Always
   replicas: 1
@@ -69,11 +64,10 @@ proxyService:
     targetPort: 8000
     type: ClusterIP
 
-# Movies service configuration
 moviesService:
   enabled: true
   image:
-    repository: ghcr.io/db-exp/cinemaabysstest/movies-service
+    repository: ghcr.io/db-exp/cinemaabyss/movies-service
     tag: latest
     pullPolicy: Always
   replicas: 1
@@ -89,11 +83,10 @@ moviesService:
     targetPort: 8081
     type: ClusterIP
 
-# Events service configuration
 eventsService:
   enabled: true
   image:
-    repository: ghcr.io/db-exp/cinemaabysstest/events-service
+    repository: ghcr.io/db-exp/cinemaabyss/events-service
     tag: latest
     pullPolicy: Always
   replicas: 1
@@ -109,7 +102,6 @@ eventsService:
     targetPort: 8082
     type: ClusterIP
 
-# Kafka configuration
 kafka:
   enabled: true
   image:
@@ -139,7 +131,6 @@ kafka:
       partitions: 1
       replicationFactor: 1
 
-# Zookeeper configuration
 zookeeper:
   enabled: true
   image:
@@ -159,7 +150,6 @@ zookeeper:
     size: 1Gi
     accessMode: ReadWriteOnce
 
-# Ingress configuration
 ingress:
   enabled: true
   className: nginx
@@ -178,8 +168,6 @@ ingress:
           service: events-service
           port: 8082
 
-# Application configuration
 config:
-  # Strangler Fig configuration
   gradualMigration: "true"
   moviesMigrationPercent: "100"

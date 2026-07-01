@@ -1,10 +1,10 @@
 name: API Tests
 
 on:
-  push:
-    branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
+  workflow_run:
+    workflows: ["Docker Build and Push"]
+    types:
+      - completed
   workflow_dispatch:
     inputs:
       environment:
@@ -15,10 +15,7 @@ on:
         options:
           - local
           - docker
-      test_folder:
-        description: 'Test folder to run (leave empty for all)'
-        required: false
-        type: string
+          - kubernetes
 
 jobs:
   api-tests:
@@ -29,43 +26,33 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Docker Compose
-        run: |
-          docker compose --version
-      
-      - name: Start services with Docker Compose
-        run: |
-          docker compose up -d
-          # Wait for services to be ready
-          echo "Waiting for services to be ready..."
-          sleep 120
-      
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18'
           cache: 'npm'
           cache-dependency-path: tests/postman/package-lock.json
-      
+
       - name: Install Newman and dependencies
         working-directory: tests/postman
         run: npm install
-      
-      - name: Run API tests
-        working-directory: tests/postman
-        run: |
 
-          docker compose up -d
-          # Wait for services to be ready
-          echo "Waiting for services to be ready..."
-          sleep 15
-          # Build the Docker image
-          docker build -t cinemaabyss-api-tests .
-          
-          # Run the tests in Docker
-          docker run --network=cinemaabyss-network -v "$(pwd)/reports:/app/reports" cinemaabyss-api-tests
-        
-      
-      - name: Stop services
-        if: always()
-        run: docker compose down
+      - name: Run local tests
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'local'
+        working-directory: tests/postman
+        run: npm run test:local
+
+      - name: Run Docker tests
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'docker'
+        working-directory: tests/postman
+        run: npm run test:docker
+
+      - name: Run Kubernetes tests
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'kubernetes'
+        working-directory: tests/postman
+        run: npm run test:kubernetes
+
+      - name: Run tests after CI build
+        if: github.event_name == 'workflow_run'
+        working-directory: tests/postman
+        run: npm run test:docker
