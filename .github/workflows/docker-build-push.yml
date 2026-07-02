@@ -2,16 +2,16 @@ name: Docker Build and Push
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [main]
     paths:
-      - 'src/**'
-      - '.github/workflows/docker-build-push.yml'
+      - "src/**"
+      - ".github/workflows/docker-build-push.yml"
   workflow_dispatch:
   push:
-    branches: [ main ]
+    branches: ["**"]
     paths:
-      - 'src/**'
-      - '.github/workflows/docker-build-push.yml'
+      - "src/**"
+      - ".github/workflows/docker-build-push.yml"
   release:
     types: [published]
 
@@ -161,7 +161,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: "18"
 
       - name: Install test dependencies
         working-directory: ./tests/postman
