@@ -33,7 +33,7 @@ func NewEventsService(brokers []string) *EventsService {
 	}
 }
 
-func (s *EventsService) getProducer(topic string) *kafka.Writer {
+func (s *EventsService) getProducer(topic string) (*kafka.Writer, error) {
 	if _, exists := s.producers[topic]; !exists {
 		s.producers[topic] = &kafka.Writer{
 			Addr:     kafka.TCP(s.kafkaBrokers...),
@@ -41,35 +41,46 @@ func (s *EventsService) getProducer(topic string) *kafka.Writer {
 			Balancer: &kafka.LeastBytes{},
 		}
 	}
-	return s.producers[topic]
+	return s.producers[topic], nil
 }
 
 func (s *EventsService) PublishEvent(topic string, event Event) error {
-	writer := s.getProducer(topic)
-	
+	writer, err := s.getProducer(topic)
+	if err != nil {
+		return fmt.Errorf("failed to get producer: %w", err)
+	}
+
 	eventBytes, err := json.Marshal(event)
 	if err != nil {
 		log.Printf("Failed to marshal event: %v", err)
 		return fmt.Errorf("failed to marshal event: %w", err)
 	}
-	
+
 	msg := kafka.Message{
 		Key:   []byte(event.Type),
 		Value: eventBytes,
 		Time:  time.Now(),
 	}
-	
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	
-	log.Printf("Attempting to write message to %s", topic)
-	if err := writer.WriteMessages(ctx, msg); err != nil {
-		log.Printf("Failed to write message to %s: %v", topic, err)
-		return fmt.Errorf("failed to write message: %w", err)
+
+	maxRetries := 3
+	var lastErr error
+	for i := 0; i < maxRetries; i++ {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		log.Printf("Attempting to write message to %s (attempt %d/%d)", topic, i+1, maxRetries)
+		err := writer.WriteMessages(ctx, msg)
+		cancel()
+		if err == nil {
+			log.Printf("Published event to %s: %s", topic, event.Type)
+			return nil
+		}
+		lastErr = err
+		log.Printf("Failed to write message to %s (attempt %d/%d): %v", topic, i+1, maxRetries, err)
+		if i < maxRetries-1 {
+			time.Sleep(2 * time.Second)
+		}
 	}
-	
-	log.Printf("Published event to %s: %s", topic, event.Type)
-	return nil
+
+	return fmt.Errorf("failed to write message after %d retries: %w", maxRetries, lastErr)
 }
 
 func (s *EventsService) StartConsuming(topic string) {

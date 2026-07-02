@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	_ "github.com/lib/pq"
 )
@@ -50,11 +51,18 @@ func initDB() {
 		log.Fatal(err)
 	}
 
-	err = db.Ping()
-	if err != nil {
-		log.Fatal(err)
+	maxRetries := 30
+	retryDelay := 1 * time.Second
+	for i := 0; i < maxRetries; i++ {
+		err = db.Ping()
+		if err == nil {
+			log.Println("Successfully connected to database")
+			return
+		}
+		log.Printf("Database connection attempt %d/%d: %v", i+1, maxRetries, err)
+		time.Sleep(retryDelay)
 	}
-	log.Println("Successfully connected to database")
+	log.Fatal("Could not connect to database after maximum retries")
 }
 
 func handleHealth(w http.ResponseWriter, r *http.Request) {
