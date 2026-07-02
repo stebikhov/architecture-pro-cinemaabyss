@@ -1,6 +1,12 @@
 name: API Tests
 
 on:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - '.github/workflows/api-tests.yml'
   workflow_run:
     workflows: ["Docker Build and Push"]
     types:
@@ -21,7 +27,7 @@ jobs:
   api-tests:
     name: Run API Tests
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3

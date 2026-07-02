@@ -1,6 +1,11 @@
 name: Docker Build and Push
 
 on:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'src/**'
+      - '.github/workflows/docker-build-push.yml'
   workflow_dispatch:
   push:
     branches: [ main ]
@@ -18,8 +23,35 @@ env:
   PROXY_SERVICE_IMAGE_NAME: ${{ github.repository }}/proxy-service
 
 jobs:
+  validate:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build Monolith (validate)
+        run: |
+          docker buildx build --load ./src/monolith
+
+      - name: Build Movies Service (validate)
+        run: |
+          docker buildx build --load ./src/microservices/movies
+
+      - name: Build Events Service (validate)
+        run: |
+          docker buildx build --load ./src/microservices/events
+
+      - name: Build Proxy Service (validate)
+        run: |
+          docker buildx build --load ./src/microservices/proxy
+
   build-and-push:
     runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
     permissions:
       contents: read
       packages: write

@@ -24,7 +24,7 @@ spec:
         - name: dockerconfigjson
       containers:
       - name: movies-service
-        image: ghcr.io/db-exp/cinemaabyss/movies-service:latest
+        image: ghcr.io/stebikhov/architecture-pro-cinemaabyss/movies-service:latest
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8081

@@ -19,7 +19,7 @@ spec:
         - name: dockerconfigjson
       containers:
         - name: proxy-service
-          image: ghcr.io/db-exp/cinemaabyss/proxy-service:latest
+          image: ghcr.io/stebikhov/architecture-pro-cinemaabyss/proxy-service:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8000

@@ -24,7 +24,7 @@ spec:
         - name: dockerconfigjson
       containers:
       - name: monolith
-        image: ghcr.io/db-exp/cinemaabyss/monolith:latest
+        image: ghcr.io/stebikhov/architecture-pro-cinemaabyss/monolith:latest
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8080

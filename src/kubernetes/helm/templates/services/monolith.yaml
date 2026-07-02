@@ -23,8 +23,10 @@ spec:
       labels:
         app: monolith
     spec:
+      {{- if .Values.global.imagePullSecrets.create }}
       imagePullSecrets:
         - name: dockerconfigjson
+      {{- end }}
       containers:
       - name: monolith
         image: {{ .Values.monolith.image.repository }}:{{ .Values.monolith.image.tag }}

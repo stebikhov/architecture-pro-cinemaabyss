@@ -23,8 +23,10 @@ spec:
       labels:
         app: movies-service
     spec:
+      {{- if .Values.global.imagePullSecrets.create }}
       imagePullSecrets:
         - name: dockerconfigjson
+      {{- end }}
       containers:
       - name: movies-service
         image: {{ .Values.moviesService.image.repository }}:{{ .Values.moviesService.image.tag }}

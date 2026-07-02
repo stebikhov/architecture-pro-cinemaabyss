@@ -1,9 +1,14 @@
 global:
   namespace: cinemaabyss
   domain: cinemaabyss.example.com
+  registry: ghcr.io
+  imagePullSecrets:
+    create: true
+    dockerconfigjson: ""
+  github:
+    username: "stebikhov"
+    token: ""
 
-imagePullSecrets:
-  dockerconfigjson: ewoJImF1dGhzIjogewoJCSJnaGNyLmlvIjogewoJCQkiYXV0aCI6ICJZVzV2Ym5sdGIzVnpPbUZ1YjI1NWJXOTFjdz09In19fQ==
 database:
   host: postgres
   port: 5432
@@ -29,7 +34,7 @@ database:
 monolith:
   enabled: true
   image:
-    repository: ghcr.io/db-exp/cinemaabyss/monolith
+    repository: ghcr.io/stebikhov/architecture-pro-cinemaabyss/monolith
     tag: latest
     pullPolicy: Always
   replicas: 1
@@ -48,7 +53,7 @@ monolith:
 proxyService:
   enabled: true
   image:
-    repository: ghcr.io/db-exp/cinemaabyss/proxy-service
+    repository: ghcr.io/stebikhov/architecture-pro-cinemaabyss/proxy-service
     tag: latest
     pullPolicy: Always
   replicas: 1
@@ -67,7 +72,7 @@ proxyService:
 moviesService:
   enabled: true
   image:
-    repository: ghcr.io/db-exp/cinemaabyss/movies-service
+    repository: ghcr.io/stebikhov/architecture-pro-cinemaabyss/movies-service
     tag: latest
     pullPolicy: Always
   replicas: 1
@@ -86,7 +91,7 @@ moviesService:
 eventsService:
   enabled: true
   image:
-    repository: ghcr.io/db-exp/cinemaabyss/events-service
+    repository: ghcr.io/stebikhov/architecture-pro-cinemaabyss/events-service
     tag: latest
     pullPolicy: Always
   replicas: 1

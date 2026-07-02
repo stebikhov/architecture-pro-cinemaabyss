@@ -1,0 +1,10 @@
+.git
+*.md
+.env
+.env.*
+!.env.example
+docker-compose*.yml
+Makefile
+scripts
+tests
+docs
