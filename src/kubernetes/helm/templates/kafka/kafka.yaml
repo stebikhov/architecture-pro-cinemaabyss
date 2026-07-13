@@ -58,6 +58,10 @@ spec:
       labels:
         app: zookeeper
     spec:
+      {{- if .Values.global.imagePullSecrets.create }}
+      imagePullSecrets:
+        - name: dockerconfigjson
+      {{- end }}
       containers:
       - name: zookeeper
         image: {{ .Values.zookeeper.image.repository }}:{{ .Values.zookeeper.image.tag }}
@@ -154,6 +158,10 @@ spec:
       labels:
         app: kafka
     spec:
+      {{- if .Values.global.imagePullSecrets.create }}
+      imagePullSecrets:
+        - name: dockerconfigjson
+      {{- end }}
       containers:
       - name: kafka
         image: {{ .Values.kafka.image.repository }}:{{ .Values.kafka.image.tag }}

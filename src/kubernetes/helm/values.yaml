@@ -1,12 +1,14 @@
-# Global settings
 global:
   namespace: cinemaabyss
   domain: cinemaabyss.example.com
+  registry: ""
+  imagePullSecrets:
+    create: false
+    dockerconfigjson: ""
+  github:
+    username: "stebikhov"
+    token: ""
 
-# Image pull secrets
-imagePullSecrets:
-  dockerconfigjson: ewoJImF1dGhzIjogewoJCSJnaGNyLmlvIjogewoJCQkiYXV0aCI6
-# Database configuration
 database:
   host: postgres
   port: 5432
@@ -29,13 +31,12 @@ database:
     size: 10Gi
     accessMode: ReadWriteOnce
 
-# Monolith configuration
 monolith:
   enabled: true
   image:
-    repository: ghcr.io/db-exp/cinemaabysstest/monolith
+    repository: architecture-pro-cinemaabyss-monolith
     tag: latest
-    pullPolicy: Always
+    pullPolicy: IfNotPresent
   replicas: 1
   resources:
     limits:
@@ -49,13 +50,12 @@ monolith:
     targetPort: 8080
     type: ClusterIP
 
-# Proxy service configuration
 proxyService:
   enabled: true
   image:
-    repository: ghcr.io/db-exp/cinemaabysstest/proxy-service
+    repository: architecture-pro-cinemaabyss-proxy-service
     tag: latest
-    pullPolicy: Always
+    pullPolicy: IfNotPresent
   replicas: 1
   resources:
     limits:
@@ -69,13 +69,12 @@ proxyService:
     targetPort: 8000
     type: ClusterIP
 
-# Movies service configuration
 moviesService:
   enabled: true
   image:
-    repository: ghcr.io/db-exp/cinemaabysstest/movies-service
+    repository: architecture-pro-cinemaabyss-movies-service
     tag: latest
-    pullPolicy: Always
+    pullPolicy: IfNotPresent
   replicas: 1
   resources:
     limits:
@@ -89,13 +88,12 @@ moviesService:
     targetPort: 8081
     type: ClusterIP
 
-# Events service configuration
 eventsService:
   enabled: true
   image:
-    repository: ghcr.io/db-exp/cinemaabysstest/events-service
+    repository: architecture-pro-cinemaabyss-events-service
     tag: latest
-    pullPolicy: Always
+    pullPolicy: IfNotPresent
   replicas: 1
   resources:
     limits:
@@ -109,7 +107,6 @@ eventsService:
     targetPort: 8082
     type: ClusterIP
 
-# Kafka configuration
 kafka:
   enabled: true
   image:
@@ -139,7 +136,6 @@ kafka:
       partitions: 1
       replicationFactor: 1
 
-# Zookeeper configuration
 zookeeper:
   enabled: true
   image:
@@ -159,7 +155,6 @@ zookeeper:
     size: 1Gi
     accessMode: ReadWriteOnce
 
-# Ingress configuration
 ingress:
   enabled: true
   className: nginx
@@ -178,8 +173,6 @@ ingress:
           service: events-service
           port: 8082
 
-# Application configuration
 config:
-  # Strangler Fig configuration
   gradualMigration: "true"
   moviesMigrationPercent: "100"

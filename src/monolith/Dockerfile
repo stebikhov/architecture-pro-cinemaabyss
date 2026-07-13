@@ -1,9 +1,11 @@
-FROM golang:1.23-alpine AS builder
+FROM golang:1.23-alpine3.20 AS builder
+
 
 WORKDIR /app
 
 # Copy go mod and sum files
 COPY go.mod ./
+COPY go.sum ./
 
 # Download all dependencies
 RUN go mod download
@@ -15,7 +17,7 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o monolith .
 
 # Use a smaller image for the final application
-FROM alpine:latest  
+FROM alpine:3.20
 
 RUN apk --no-cache add ca-certificates
 

@@ -12,10 +12,8 @@ import (
 	_ "github.com/lib/pq"
 )
 
-// Database connection
 var db *sql.DB
 
-// Models
 type User struct {
 	ID       int    `json:"id"`
 	Username string `json:"username"`
@@ -46,23 +44,22 @@ type Subscription struct {
 }
 
 func main() {
-	// Initialize database connection
 	initDB()
 	defer db.Close()
 
-	// Set up HTTP routes
 	http.HandleFunc("/health", healthHandler)
 	http.HandleFunc("/api/users", handleUsers)
 	http.HandleFunc("/api/movies", handleMovies)
 	http.HandleFunc("/api/payments", handlePayments)
 	http.HandleFunc("/api/subscriptions", handleSubscriptions)
 
-	// Start server
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
+
 	log.Printf("Starting server on port %s", port)
+
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
 
@@ -71,17 +68,25 @@ func initDB() {
 	if connStr == "" {
 		connStr = "postgres://postgres:postgres@localhost/cinemaabyss?sslmode=disable"
 	}
+
 	var err error
 	db, err = sql.Open("postgres", connStr)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = db.Ping()
-	if err != nil {
-		log.Fatal(err)
+	maxRetries := 30
+	retryDelay := 1 * time.Second
+	for i := 0; i < maxRetries; i++ {
+		err = db.Ping()
+		if err == nil {
+			log.Println("Successfully connected to database")
+			return
+		}
+		log.Printf("Database connection attempt %d/%d: %v", i+1, maxRetries, err)
+		time.Sleep(retryDelay)
 	}
-	log.Println("Successfully connected to database")
+	log.Fatal("Could not connect to database after maximum retries")
 }
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {
@@ -89,7 +94,6 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]bool{"status": true})
 }
 
-// User handlers
 func handleUsers(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
@@ -114,6 +118,7 @@ func getAllUsers(w http.ResponseWriter, r *http.Request) {
 	defer rows.Close()
 
 	users := []User{}
+
 	for rows.Next() {
 		var u User
 		if err := rows.Scan(&u.ID, &u.Username, &u.Email); err != nil {
@@ -158,7 +163,6 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(u)
 }
 
-// Movie handlers
 func handleMovies(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
@@ -191,7 +195,6 @@ func getAllMovies(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Get genres for this movie
 		genreRows, err := db.Query("SELECT genre FROM movie_genres WHERE movie_id = $1", m.ID)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -226,7 +229,6 @@ func getMovieByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get genres for this movie
 	genreRows, err := db.Query("SELECT genre FROM movie_genres WHERE movie_id = $1", m.ID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -289,7 +291,6 @@ func createMovie(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(m)
 }
 
-// Payment handlers
 func handlePayments(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
@@ -385,7 +386,6 @@ func createPayment(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(p)
 }
 
-// Subscription handlers
 func handleSubscriptions(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":

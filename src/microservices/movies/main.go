@@ -7,14 +7,13 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	_ "github.com/lib/pq"
 )
 
-// Database connection
 var db *sql.DB
 
-// Models
 type Movie struct {
 	ID          int      `json:"id"`
 	Title       string   `json:"title"`
@@ -24,20 +23,19 @@ type Movie struct {
 }
 
 func main() {
-	// Initialize database connection
 	initDB()
 	defer db.Close()
 
-	// Set up HTTP routes
 	http.HandleFunc("/api/movies", handleMovies)
 	http.HandleFunc("/api/movies/health", handleHealth)
 
-	// Start server
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "8081" // Note: Using a different port than the monolith
+		port = "8081"
 	}
+
 	log.Printf("Starting movies microservice on port %s", port)
+
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
 
@@ -53,11 +51,18 @@ func initDB() {
 		log.Fatal(err)
 	}
 
-	err = db.Ping()
-	if err != nil {
-		log.Fatal(err)
+	maxRetries := 30
+	retryDelay := 1 * time.Second
+	for i := 0; i < maxRetries; i++ {
+		err = db.Ping()
+		if err == nil {
+			log.Println("Successfully connected to database")
+			return
+		}
+		log.Printf("Database connection attempt %d/%d: %v", i+1, maxRetries, err)
+		time.Sleep(retryDelay)
 	}
-	log.Println("Successfully connected to database")
+	log.Fatal("Could not connect to database after maximum retries")
 }
 
 func handleHealth(w http.ResponseWriter, r *http.Request) {
@@ -65,7 +70,6 @@ func handleHealth(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]bool{"status": true})
 }
 
-// Movie handlers
 func handleMovies(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
@@ -91,6 +95,7 @@ func getAllMovies(w http.ResponseWriter, r *http.Request) {
 	defer rows.Close()
 
 	movies := []Movie{}
+
 	for rows.Next() {
 		var m Movie
 		if err := rows.Scan(&m.ID, &m.Title, &m.Description, &m.Rating); err != nil {
@@ -98,7 +103,6 @@ func getAllMovies(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Get genres for this movie
 		genreRows, err := db.Query("SELECT genre FROM movie_genres WHERE movie_id = $1", m.ID)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -133,7 +137,6 @@ func getMovieByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get genres for this movie
 	genreRows, err := db.Query("SELECT genre FROM movie_genres WHERE movie_id = $1", m.ID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

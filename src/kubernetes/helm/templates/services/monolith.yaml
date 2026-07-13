@@ -23,6 +23,10 @@ spec:
       labels:
         app: monolith
     spec:
+      {{- if .Values.global.imagePullSecrets.create }}
+      imagePullSecrets:
+        - name: dockerconfigjson
+      {{- end }}
       containers:
       - name: monolith
         image: {{ .Values.monolith.image.repository }}:{{ .Values.monolith.image.tag }}
@@ -43,19 +47,17 @@ spec:
           {{- toYaml .Values.monolith.resources | nindent 10 }}
         readinessProbe:
           httpGet:
-            path: /api/users
+            path: /health
             port: {{ .Values.monolith.service.targetPort }}
           initialDelaySeconds: 5
           periodSeconds: 10
         livenessProbe:
           httpGet:
-            path: /api/users
+            path: /health
             port: {{ .Values.monolith.service.targetPort }}
           initialDelaySeconds: 15
           periodSeconds: 20
       restartPolicy: Always
-      imagePullSecrets:
-        - name: dockerconfigjson
 ---
 apiVersion: v1
 kind: Service

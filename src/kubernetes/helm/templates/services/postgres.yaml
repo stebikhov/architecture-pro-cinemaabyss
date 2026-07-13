@@ -18,6 +18,10 @@ spec:
       labels:
         app: postgres
     spec:
+      {{- if .Values.global.imagePullSecrets.create }}
+      imagePullSecrets:
+        - name: dockerconfigjson
+      {{- end }}
       containers:
       - name: postgres
         image: {{ .Values.database.image.repository }}:{{ .Values.database.image.tag }}
@@ -61,6 +65,10 @@ spec:
       - name: postgres-init-scripts
         configMap:
           name: postgres-init-scripts
+      {{- if not .Values.database.persistence.enabled }}
+      - name: postgres-data
+        emptyDir: {}
+      {{- end }}
   {{- if .Values.database.persistence.enabled }}
   volumeClaimTemplates:
   - metadata:
@@ -70,9 +78,6 @@ spec:
       resources:
         requests:
           storage: {{ .Values.database.persistence.size }}
-  {{- else }}
-      - name: postgres-data
-        emptyDir: {}
   {{- end }}
 ---
 apiVersion: v1

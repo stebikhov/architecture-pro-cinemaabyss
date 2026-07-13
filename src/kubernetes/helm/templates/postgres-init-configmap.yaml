@@ -11,7 +11,7 @@ data:
     -- Initialize CinemaAbyss Database Schema
 
     -- Connect to the database
-    \c {{ .Values.database.name }};
+    \\c {{ .Values.database.name }};
 
     -- Enable UUID extension
     CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
